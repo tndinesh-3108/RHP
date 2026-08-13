@@ -1,69 +1,40 @@
 class Solution {
-    public int latestDayToCross(int row, int col, int[][] cells) {
-        DSU dsu = new DSU(row * col + 2);
-        int[][] grid = new int[row][col];
-        int[][] dirs = { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
-
-        for (int i = cells.length - 1; i >= 0; i--) {
-            int r = cells[i][0] - 1;
-            int c = cells[i][1] - 1;
-            grid[r][c] = 1;
-
-            int id1 = r * col + c + 1;
-
-            for (int[] d : dirs) {
-                int nr = r + d[0];
-                int nc = c + d[1];
-                if (nr >= 0 && nr < row && nc >= 0 && nc < col && grid[nr][nc] == 1)
-                    dsu.union(id1, nr * col + nc + 1);
+    private int find(int[] ldr, int lt){
+        if (ldr[lt] == lt) {
+            return lt;
+        }
+        return ldr[lt] = find(ldr, ldr[lt]);
+    }
+    private void join(int[] ldr, int lt, int rt){
+        ldr[find(ldr, rt)] = find(ldr, lt);
+    }
+    public int latestDayToCross(int R, int C, int[][] cells){
+        boolean water[] = new boolean[R*C+2];
+        int ldr[] = new int[R*C+2];
+        for(int node = 0; node<R*C+2; node++) ldr[node] = node;
+        int d[][] = {{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
+        int days = 0;
+        for(int cell[] : cells){
+            int row = cell[0], col = cell[1];
+            row--; col--;
+            water[row*C+col+1] = true;
+            for(int i=0;i<8;i++){
+                int ar = row + d[i][0], ac = col+d[i][1];
+                if(ar>=0 && ar<R && ac>=0 && ac<C && water[ar*C+ac+1]){
+                    join(ldr,row*C+col+1,ar*C+ac+1);
+                }
             }
-
-            if (r == 0)
-                dsu.union(0, id1);
-
-            if (r == row - 1)
-                dsu.union(row * col + 1, id1);
-
-            if (dsu.find(0) == dsu.find(row * col + 1))
-                return i;
+            if(col==0){
+                join(ldr, 0, row*C+col+1);
+            }
+            if(col==C-1){
+                join(ldr, row*C+col+1, R*C+1);
+            }
+            if(find(ldr,0)==find(ldr,R*C+1)){
+                return days;
+            }
+            days++;
         }
-
-        return -1;
-    }
-}
-
-class DSU {
-    int[] root;
-    int[] size;
-
-    DSU(int n) {
-        root = new int[n];
-        size = new int[n];
-        for (int i = 0; i < n; i++)
-            root[i] = i;
-        Arrays.fill(size, 1);
-    }
-
-    int find(int x) {
-        if (root[x] != x)
-            root[x] = find(root[x]);
-        return root[x];
-    }
-
-    void union(int x, int y) {
-        int rx = find(x);
-        int ry = find(y);
-
-        if (rx == ry)
-            return;
-
-        if (size[rx] > size[ry]) {
-            int tmp = rx;
-            rx = ry;
-            ry = tmp;
-        }
-
-        root[rx] = ry;
-        size[ry] += size[rx];
+        return days;
     }
 }
